@@ -53,6 +53,7 @@ def draw_board():
         for col in range(8):
             board_color = (240, 217, 181) if (col + row) % 2 == 0 else (181, 136, 99)
             pygame.draw.rect(screen, board_color, (col * field, row * field, field, field))
+
 def draw_pieces():
     for square in chess.SQUARES:
         piece = board.piece_at(square)
@@ -70,12 +71,14 @@ def draw_pieces():
 
             image = pieces[key]
             screen.blit(image, (x, y))
+
 def draw_selected(selected_square):
     file = chess.square_file(selected_square)
     rank = chess.square_rank(selected_square)
     x = file * field
     y = (7 - rank) * field
     pygame.draw.rect(screen, (246, 235, 114) if (file + rank) % 2 != 0 else (220, 195, 75), (x, y, field, field))
+
 def draw_legal_moves(targets, capture_targets):
     for sq in targets:
         file = chess.square_file(sq)
@@ -90,6 +93,7 @@ def draw_legal_moves(targets, capture_targets):
         else:
             pygame.draw.circle(surf, (120, 120, 120, 120), (field//2, field//2), field // 2 , 9)
         screen.blit(surf, (x, y))
+
 def get_legal_targets(from_square):
     targets = []
     capture_targets = []
@@ -98,8 +102,8 @@ def get_legal_targets(from_square):
             targets.append(move.to_square)
         if board.is_capture(move):
             capture_targets.append(move.to_square)
-
     return targets, capture_targets
+
 def draw_last_move(last_move):
     if last_move:
         start_file = chess.square_file(last_move.from_square)
@@ -114,6 +118,7 @@ def draw_last_move(last_move):
         x_end = end_file * field
         y_end = (7 - end_rank) * field
         pygame.draw.rect(screen, (246, 235, 114) if (end_file + end_rank) % 2 != 0 else (220, 195, 75), (x_end, y_end, field, field))
+
 def draw_check():
     if board.is_check():
         king_square = board.king(board.turn)
@@ -126,6 +131,7 @@ def draw_check():
             y = (7 - rank) * field
 
             pygame.draw.rect(screen, (255, 85, 60), (x, y, field, field))
+
 def draw_sidebar():
     global game_ongoing
     sidebar_x = size
@@ -198,6 +204,7 @@ def draw_sidebar():
 
     screen.blit(black_label, (sidebar_x + 20, size//2 - 85))
     screen.blit(black_clock, (sidebar_x + 20, size//2 - 60))
+
 def draw_promotion_menu():
     if promotion_pending is None:
         return
@@ -225,6 +232,7 @@ def draw_promotion_menu():
 
         image = pieces[color + option]
         screen.blit(image, (x, panel_y))
+
 def handle_promotion_click(pos):
     global promotion_pending, last_move
 
@@ -258,18 +266,21 @@ def handle_promotion_click(pos):
 
     promotion_pending = None
     return True
+
 def drawing():
     draw_board()
     draw_last_move(last_move)
     draw_check()
     if selected_square is not None and game_ongoing:
         draw_selected(selected_square)
-        draw_legal_moves(legal_targets, capture_targets)
+        if board.turn:
+            draw_legal_moves(legal_targets, capture_targets)
     draw_pieces()
     draw_sidebar()
     if promotion_pending:
         draw_promotion_menu()
     pygame.display.update()
+
 def handle_engine(board):
     global engine_result, engine_thinking
     engine_result = engine.find_best_move(board)
@@ -298,7 +309,7 @@ while running:
                     selected_square = square
                     legal_targets, capture_targets = get_legal_targets(square)
 
-            elif selected_square is not None and square in legal_targets and game_ongoing:
+            elif selected_square is not None and square in legal_targets and game_ongoing and board.turn:
                 if board.piece_at(selected_square).piece_type == chess.PAWN and chess.square_rank(square) in [0, 7]:
                     promotion_pending = (selected_square, square)
                 else:
